@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react'
-import './App.css'
+import { useState, useEffect, useRef } from 'react'
 
 // Initial data
 const initialInterns = [
@@ -35,8 +34,10 @@ const statuses = ['todo', 'in-progress', 'review', 'done']
 
 // Storage helpers
 const loadFromStorage = (key, defaultValue) => {
+  if (typeof window === 'undefined') return defaultValue
+
   try {
-    const stored = localStorage.getItem(key)
+    const stored = window.localStorage.getItem(key)
     return stored ? JSON.parse(stored) : defaultValue
   } catch {
     return defaultValue
@@ -44,16 +45,26 @@ const loadFromStorage = (key, defaultValue) => {
 }
 
 const saveToStorage = (key, value) => {
-  localStorage.setItem(key, JSON.stringify(value))
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value))
+  } catch (error) {
+    console.warn(`Failed to save ${key} to localStorage`, error)
+  }
 }
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [tasks, setTasks] = useState(() => loadFromStorage('tasks', initialTasks))
-  const [interns] = useState(initialInterns)
+  const interns = initialInterns
   const [handoffs, setHandoffs] = useState(() => loadFromStorage('handoffs', initialHandoffs))
   const [socialPosts, setSocialPosts] = useState(() => loadFromStorage('socialPosts', initialSocialPosts))
-  
+  const nextIdRef = useRef(Math.max(
+    ...tasks.map(task => task.id),
+    ...handoffs.map(handoff => handoff.id),
+    ...socialPosts.map(post => post.id),
+    0
+  ) + 1)
+
   // Filters
   const [filterOwner, setFilterOwner] = useState('all')
   const [filterCategory, setFilterCategory] = useState('all')
@@ -92,7 +103,7 @@ function App() {
     if (editingTask) {
       setTasks(tasks.map(t => t.id === editingTask.id ? { ...taskForm, id: editingTask.id } : t))
     } else {
-      setTasks([...tasks, { ...taskForm, id: Date.now() }])
+      setTasks([...tasks, { ...taskForm, id: nextIdRef.current++ }])
     }
     closeTaskModal()
   }
@@ -126,7 +137,7 @@ function App() {
   // Handoff CRUD
   const handleSaveHandoff = () => {
     if (!handoffForm.fromIntern || !handoffForm.toIntern || !handoffForm.task) return alert('All fields required')
-    setHandoffs([...handoffs, { ...handoffForm, id: Date.now(), status: 'pending', createdAt: new Date().toISOString().split('T')[0] }])
+    setHandoffs([...handoffs, { ...handoffForm, id: nextIdRef.current++, status: 'pending', createdAt: new Date().toISOString().split('T')[0] }])
     setShowHandoffModal(false)
     setHandoffForm({ fromIntern: '', toIntern: '', task: '', notes: '' })
   }
@@ -144,7 +155,7 @@ function App() {
   // Social Post CRUD
   const handleSaveSocialPost = () => {
     if (!socialForm.content || !socialForm.owner) return alert('Content and Owner are required')
-    setSocialPosts([...socialPosts, { ...socialForm, id: Date.now() }])
+    setSocialPosts([...socialPosts, { ...socialForm, id: nextIdRef.current++ }])
     setShowSocialModal(false)
     setSocialForm({ platform: 'linkedin', content: '', scheduledDate: '', status: 'draft', owner: '' })
   }
