@@ -1,16 +1,67 @@
-# React + Vite
+# Seibo Intern Task Platform (MVP v1)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is a lightweight Trello-style task management MVP for Seibo summer interns.
+It is designed to be simple, clear, and easy for non-technical users.
 
-Currently, two official plugins are available:
+## Purpose
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Makoto requested a practical intern task board where interns can:
+- share what they are working on,
+- track progress clearly,
+- and hand over work smoothly.
 
-## React Compiler
+This first MVP keeps only essential features.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech stack
 
-## Expanding the ESLint configuration
+- React + Vite
+- Tailwind CSS
+- Frontend only
+- `localStorage` for data persistence
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Scope of this MVP
+
+The app has 4 sections:
+1. Task Board (To Do / In Progress / Blocked / Done)
+2. Interns List
+3. Handover Tracker
+4. LinkedIn / SNS Tracker
+
+## How to run locally
+
+### 1) Install dependencies
+
+```bash
+npm install
+```
+
+### 2) Start development server
+
+```bash
+npm run dev
+```
+
+Open the local URL shown in the terminal (usually `http://localhost:5173`).
+
+### 3) Lint
+
+```bash
+npm run lint
+```
+
+### 4) Build
+
+```bash
+npm run build
+```
+
+## Data storage
+
+- Task data is stored in browser `localStorage`.
+- No backend, no login, no database.
+- Clearing browser storage will reset saved tasks.
+
+## Notes
+
+- This is **MVP v1** intended for quick internal review.
+- The design intentionally avoids over-engineering.

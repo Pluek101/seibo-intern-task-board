@@ -1,593 +1,576 @@
-import { useState, useEffect } from 'react'
-import './App.css'
+import { useMemo, useRef, useState } from 'react'
 
-// Initial data
-const initialInterns = [
-  { id: 1, name: 'Sarah Chen', role: 'Social Media', email: 'sarah@seibo.org', avatar: 'SC' },
-  { id: 2, name: 'Marcus Johnson', role: 'Events', email: 'marcus@seibo.org', avatar: 'MJ' },
-  { id: 3, name: 'Emily Rodriguez', role: 'Fundraising', email: 'emily@seibo.org', avatar: 'ER' },
-  { id: 4, name: 'David Kim', role: 'Research', email: 'david@seibo.org', avatar: 'DK' },
+const interns = [
+  {
+    id: 1,
+    name: 'Pluek',
+    period: 'May 18 to Jul 10',
+    focus: ['AI Solutions', 'Digital Analytics', 'Task Management Platform', 'LinkedIn updates'],
+  },
+  {
+    id: 2,
+    name: 'Thomas',
+    period: 'May 22 to Jul 21',
+    focus: ['Translation', 'Moodle Development', 'PR TIMES Media List'],
+  },
+  {
+    id: 3,
+    name: 'Kealee C.',
+    period: 'May 25 to Jul 06',
+    focus: ['Marketing', 'Event Production', 'SNS Integration'],
+  },
+  {
+    id: 4,
+    name: 'Kendall Kennedy',
+    period: 'Jun 01 to Jul 24',
+    focus: ['Accounting', 'Data Analysis', 'Monthly Report', 'GA Analysis'],
+  },
+  {
+    id: 5,
+    name: 'Tyki A.',
+    period: 'Jun 01 to Jun 26',
+    focus: ['Youth Leadership', 'School Network', 'School Website'],
+  },
+  {
+    id: 6,
+    name: 'Emir Sekmen',
+    period: 'Jun 08 to Jul 29',
+    focus: ['Yamathon', 'Educational Marketing', 'Moodle Promotion'],
+  },
+  {
+    id: 7,
+    name: 'Adriene Creech',
+    period: 'Jun 08 to Jul 16',
+    focus: ['Monthly Report Improvement', 'English Community PR'],
+  },
+  {
+    id: 8,
+    name: 'Natalee Lee',
+    period: 'Jun 16 to Jul 24',
+    focus: ['Moodle Development', 'Business Pitching', 'SNS Consistency'],
+  },
+  {
+    id: 9,
+    name: 'Camelia Elaoufi',
+    period: 'Jun 15 to Jul 24',
+    focus: ['Course Site Editing', 'Preschool Profile'],
+  },
+  {
+    id: 10,
+    name: 'Madina Mohsini',
+    period: 'Jun 22 to Aug 01',
+    focus: ['School Site Development', 'SNS Integration', 'Event Promotion'],
+  },
 ]
+
+const handovers = [
+  { id: 1, flow: 'Pluek → Kendall', topic: 'AI / Digital Analytics' },
+  { id: 2, flow: 'Tyki → Madina', topic: 'School Website' },
+  { id: 3, flow: 'Kealee → Natalee → Madina', topic: 'SNS Integration and Consistency' },
+  { id: 4, flow: 'Thomas / Adriene / Natalee', topic: 'Moodle weekly progress sharing' },
+  { id: 5, flow: 'Kealee → Emir / Madina', topic: 'Event promotion materials' },
+]
+
+const socialItems = [
+  {
+    id: 1,
+    idea: 'LinkedIn profile optimization tips for interns',
+    platform: 'LinkedIn',
+    owner: 'Pluek',
+    status: 'Draft',
+    notes: 'Share before internship midpoint review.',
+    link: '',
+  },
+  {
+    id: 2,
+    idea: 'Expat community networking story',
+    platform: 'LinkedIn',
+    owner: 'Adriene',
+    status: 'In Review',
+    notes: 'Include one quote from participants.',
+    link: '',
+  },
+  {
+    id: 3,
+    idea: 'Fundraising campaign progress post',
+    platform: 'LinkedIn',
+    owner: 'Kendall',
+    status: 'Planned',
+    notes: 'Use monthly report data points.',
+    link: '',
+  },
+  {
+    id: 4,
+    idea: 'Impact stories from school partners',
+    platform: 'Instagram',
+    owner: 'Tyki',
+    status: 'Scheduled',
+    notes: 'Prepare 3 slides + CTA.',
+    link: '',
+  },
+  {
+    id: 5,
+    idea: 'Event promotion for Yamathon activities',
+    platform: 'Instagram',
+    owner: 'Emir',
+    status: 'Draft',
+    notes: 'Coordinate with Kealee and Madina assets.',
+    link: '',
+  },
+  {
+    id: 6,
+    idea: 'Post analytics review',
+    platform: 'LinkedIn',
+    owner: 'Natalee',
+    status: 'Done',
+    notes: 'Summarize best-performing post themes.',
+    link: 'https://www.linkedin.com/',
+  },
+  {
+    id: 7,
+    idea: 'Volunteer opportunity announcement',
+    platform: 'LinkedIn',
+    owner: 'Thomas',
+    status: 'Planned',
+    notes: 'Attach simple sign-up form link.',
+    link: '',
+  },
+]
+
+const statuses = ['todo', 'in-progress', 'blocked', 'done']
+const priorities = ['low', 'medium', 'high']
+const tabs = ['Task Board', 'Interns List', 'Handover Tracker', 'LinkedIn / SNS Tracker']
+const storageKey = 'seibo_task_board_tasks_v1'
 
 const initialTasks = [
-  { id: 1, title: 'Design Q2 Campaign Graphics', description: 'Create visual assets for summer fundraising campaign', owner: 1, category: 'content', priority: 'high', status: 'in-progress', dueDate: '2026-05-01' },
-  { id: 2, title: 'Prepare Board Meeting Slides', description: 'Quarterly progress report presentation', owner: 3, category: 'admin', priority: 'urgent', status: 'todo', dueDate: '2026-04-28' },
-  { id: 3, title: 'Update Volunteer Handbook', description: 'Add new safety protocols and guidelines', owner: 2, category: 'admin', priority: 'medium', status: 'review', dueDate: '2026-05-05' },
-  { id: 4, title: 'LinkedIn Post Series', description: '3-part series on NGO impact stories', owner: 1, category: 'social', priority: 'medium', status: 'done', dueDate: '2026-04-20' },
-  { id: 5, title: 'Research Grant Opportunities', description: 'Find potential funders for education program', owner: 4, category: 'fundraising', priority: 'high', status: 'in-progress', dueDate: '2026-05-10' },
-  { id: 6, title: 'Event Follow-up Emails', description: 'Send thank yous to donors from charity gala', owner: 2, category: 'outreach', priority: 'low', status: 'todo', dueDate: '2026-05-15' },
+  {
+    id: 1,
+    title: 'Set up weekly intern task board',
+    owner: 'Pluek',
+    dueDate: '2026-05-03',
+    priority: 'high',
+    notes: 'Keep columns simple for all teams.',
+    status: 'in-progress',
+  },
+  {
+    id: 2,
+    title: 'Prepare Moodle progress summary',
+    owner: 'Thomas',
+    dueDate: '2026-05-07',
+    priority: 'medium',
+    notes: 'Share with Adriene and Natalee each Friday.',
+    status: 'todo',
+  },
+  {
+    id: 3,
+    title: 'Review event promotion visual assets',
+    owner: 'Kealee C.',
+    dueDate: '2026-05-05',
+    priority: 'medium',
+    notes: 'Coordinate with Emir and Madina.',
+    status: 'blocked',
+  },
+  {
+    id: 4,
+    title: 'Finalize internship monthly report template',
+    owner: 'Kendall Kennedy',
+    dueDate: '2026-05-01',
+    priority: 'low',
+    notes: 'Draft ready for Makoto review.',
+    status: 'done',
+  },
 ]
 
-const initialHandoffs = [
-  { id: 1, fromIntern: 1, toIntern: 2, task: 'Instagram Campaign Setup', status: 'pending', notes: 'Need access to business account', createdAt: '2026-04-20' },
-  { id: 2, fromIntern: 3, toIntern: 4, task: 'Donor Database Update', status: 'completed', notes: 'All records migrated', createdAt: '2026-04-15' },
-]
+const emptyTask = {
+  title: '',
+  owner: '',
+  dueDate: '',
+  priority: 'medium',
+  notes: '',
+  status: 'todo',
+}
 
-const initialSocialPosts = [
-  { id: 1, platform: 'linkedin', content: 'Seibo Foundation is proud to announce our new education initiative!', scheduledDate: '2026-04-28', status: 'scheduled', owner: 1 },
-  { id: 2, platform: 'instagram', content: 'Meet our amazing volunteers making a difference.', scheduledDate: '2026-04-30', status: 'draft', owner: 1 },
-  { id: 3, platform: 'twitter', content: 'Thank you to all our donors for your continued support!', scheduledDate: '2026-04-25', status: 'published', owner: 2 },
-]
-
-const categories = ['admin', 'content', 'social', 'fundraising', 'outreach', 'events', 'research']
-const priorities = ['low', 'medium', 'high', 'urgent']
-const statuses = ['todo', 'in-progress', 'review', 'done']
-
-// Storage helpers
-const loadFromStorage = (key, defaultValue) => {
+const loadTasks = () => {
+  if (typeof window === 'undefined') return initialTasks
   try {
-    const stored = localStorage.getItem(key)
-    return stored ? JSON.parse(stored) : defaultValue
+    const raw = window.localStorage.getItem(storageKey)
+    if (!raw) return initialTasks
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : initialTasks
   } catch {
-    return defaultValue
+    return initialTasks
   }
 }
 
-const saveToStorage = (key, value) => {
-  localStorage.setItem(key, JSON.stringify(value))
+const saveTasks = (tasks) => {
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(tasks))
+  } catch (error) {
+    console.warn('Could not persist tasks to localStorage', error)
+  }
 }
 
 function App() {
-  const [activeTab, setActiveTab] = useState('dashboard')
-  const [tasks, setTasks] = useState(() => loadFromStorage('tasks', initialTasks))
-  const [interns] = useState(initialInterns)
-  const [handoffs, setHandoffs] = useState(() => loadFromStorage('handoffs', initialHandoffs))
-  const [socialPosts, setSocialPosts] = useState(() => loadFromStorage('socialPosts', initialSocialPosts))
-  
-  // Filters
-  const [filterOwner, setFilterOwner] = useState('all')
-  const [filterCategory, setFilterCategory] = useState('all')
-  const [filterPriority, setFilterPriority] = useState('all')
-  const [filterStatus, setFilterStatus] = useState('all')
-  
-  // Modal state
-  const [showTaskModal, setShowTaskModal] = useState(false)
-  const [editingTask, setEditingTask] = useState(null)
-  const [showHandoffModal, setShowHandoffModal] = useState(false)
-  const [showSocialModal, setShowSocialModal] = useState(false)
-  
-  // Form state
-  const [taskForm, setTaskForm] = useState({ title: '', description: '', owner: '', category: 'admin', priority: 'medium', status: 'todo', dueDate: '' })
-  const [handoffForm, setHandoffForm] = useState({ fromIntern: '', toIntern: '', task: '', notes: '' })
-  const [socialForm, setSocialForm] = useState({ platform: 'linkedin', content: '', scheduledDate: '', status: 'draft', owner: '' })
+  const [activeTab, setActiveTab] = useState('Task Board')
+  const [tasks, setTasks] = useState(loadTasks)
+  const [ownerFilter, setOwnerFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [editingTaskId, setEditingTaskId] = useState(null)
+  const [taskForm, setTaskForm] = useState(emptyTask)
 
-  // Save to localStorage on changes
-  useEffect(() => saveToStorage('tasks', tasks), [tasks])
-  useEffect(() => saveToStorage('handoffs', handoffs), [handoffs])
-  useEffect(() => saveToStorage('socialPosts', socialPosts), [socialPosts])
+  const nextTaskId = useRef(Math.max(...tasks.map((task) => task.id), 0) + 1)
 
-  // Filter tasks
-  const filteredTasks = tasks.filter(task => {
-    if (filterOwner !== 'all' && task.owner !== parseInt(filterOwner)) return false
-    if (filterCategory !== 'all' && task.category !== filterCategory) return false
-    if (filterPriority !== 'all' && task.priority !== filterPriority) return false
-    if (filterStatus !== 'all' && task.status !== filterStatus) return false
-    return true
-  })
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      if (ownerFilter !== 'all' && task.owner !== ownerFilter) return false
+      if (statusFilter !== 'all' && task.status !== statusFilter) return false
+      return true
+    })
+  }, [ownerFilter, statusFilter, tasks])
 
-  // Task CRUD
-  const handleSaveTask = () => {
-    if (!taskForm.title || !taskForm.owner) return alert('Title and Owner are required')
-    
-    if (editingTask) {
-      setTasks(tasks.map(t => t.id === editingTask.id ? { ...taskForm, id: editingTask.id } : t))
+  const tasksByStatus = useMemo(() => {
+    return statuses.reduce((acc, status) => {
+      acc[status] = filteredTasks.filter((task) => task.status === status)
+      return acc
+    }, {})
+  }, [filteredTasks])
+
+  const updateTasks = (nextTasks) => {
+    setTasks(nextTasks)
+    saveTasks(nextTasks)
+  }
+
+  const openNewTaskForm = () => {
+    setEditingTaskId(null)
+    setTaskForm(emptyTask)
+  }
+
+  const openEditTaskForm = (task) => {
+    setEditingTaskId(task.id)
+    setTaskForm(task)
+  }
+
+  const submitTask = (event) => {
+    event.preventDefault()
+    if (!taskForm.title.trim() || !taskForm.owner) return
+
+    if (editingTaskId) {
+      updateTasks(tasks.map((task) => (task.id === editingTaskId ? { ...taskForm, id: editingTaskId } : task)))
     } else {
-      setTasks([...tasks, { ...taskForm, id: Date.now() }])
+      updateTasks([...tasks, { ...taskForm, id: nextTaskId.current++ }])
     }
-    closeTaskModal()
+
+    setEditingTaskId(null)
+    setTaskForm(emptyTask)
   }
 
-  const handleDeleteTask = (id) => {
-    if (confirm('Delete this task?')) {
-      setTasks(tasks.filter(t => t.id !== id))
-    }
+  const deleteTask = (taskId) => {
+    updateTasks(tasks.filter((task) => task.id !== taskId))
   }
 
-  const handleMoveTask = (taskId, newStatus) => {
-    setTasks(tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t))
-  }
-
-  const openTaskModal = (task = null) => {
-    if (task) {
-      setEditingTask(task)
-      setTaskForm(task)
-    } else {
-      setEditingTask(null)
-      setTaskForm({ title: '', description: '', owner: '', category: 'admin', priority: 'medium', status: 'todo', dueDate: '' })
-    }
-    setShowTaskModal(true)
-  }
-
-  const closeTaskModal = () => {
-    setShowTaskModal(false)
-    setEditingTask(null)
-  }
-
-  // Handoff CRUD
-  const handleSaveHandoff = () => {
-    if (!handoffForm.fromIntern || !handoffForm.toIntern || !handoffForm.task) return alert('All fields required')
-    setHandoffs([...handoffs, { ...handoffForm, id: Date.now(), status: 'pending', createdAt: new Date().toISOString().split('T')[0] }])
-    setShowHandoffModal(false)
-    setHandoffForm({ fromIntern: '', toIntern: '', task: '', notes: '' })
-  }
-
-  const handleUpdateHandoffStatus = (id, status) => {
-    setHandoffs(handoffs.map(h => h.id === id ? { ...h, status } : h))
-  }
-
-  const handleDeleteHandoff = (id) => {
-    if (confirm('Delete this handover?')) {
-      setHandoffs(handoffs.filter(h => h.id !== id))
-    }
-  }
-
-  // Social Post CRUD
-  const handleSaveSocialPost = () => {
-    if (!socialForm.content || !socialForm.owner) return alert('Content and Owner are required')
-    setSocialPosts([...socialPosts, { ...socialForm, id: Date.now() }])
-    setShowSocialModal(false)
-    setSocialForm({ platform: 'linkedin', content: '', scheduledDate: '', status: 'draft', owner: '' })
-  }
-
-  const handleDeleteSocialPost = (id) => {
-    if (confirm('Delete this post?')) {
-      setSocialPosts(socialPosts.filter(p => p.id !== id))
-    }
-  }
-
-  const getInternName = (id) => interns.find(i => i.id === id)?.name || 'Unknown'
-  const getInternAvatar = (id) => interns.find(i => i.id === id)?.avatar || '?'
-
-  // Stats
-  const stats = {
-    total: tasks.length,
-    todo: tasks.filter(t => t.status === 'todo').length,
-    inProgress: tasks.filter(t => t.status === 'in-progress').length,
-    done: tasks.filter(t => t.status === 'done').length,
-    urgent: tasks.filter(t => t.priority === 'urgent').length
+  const changeTaskStatus = (taskId, nextStatus) => {
+    updateTasks(tasks.map((task) => (task.id === taskId ? { ...task, status: nextStatus } : task)))
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#f8f9fa' }}>
-      {/* Header */}
-      <header style={{ backgroundColor: '#2d7a4f', color: 'white', padding: '1rem' }}>
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div style={{ width: 40, height: 40, backgroundColor: 'white', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ color: '#2d7a4f', fontWeight: 'bold', fontSize: '1.25rem' }}>S</span>
-            </div>
-            <h1 style={{ margin: 0, fontSize: '1.5rem' }}>Seibo Intern Task Board</h1>
+    <div className="min-h-screen bg-slate-50 text-slate-800">
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-5 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-900">Seibo Intern Task Platform</h1>
+            <p className="text-sm text-slate-600">Simple Trello-style MVP for Seibo summer interns</p>
           </div>
-          <nav className="flex gap-1 flex-wrap justify-center">
-            {['dashboard', 'kanban', 'interns', 'handoff', 'social'].map(tab => (
+          <nav className="flex flex-wrap gap-2">
+            {tabs.map((tab) => (
               <button
                 key={tab}
+                type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`tab-btn ${activeTab === tab ? 'active' : ''}`}
-                style={{ color: activeTab === tab ? 'white' : 'rgba(255,255,255,0.8)', borderBottomColor: activeTab === tab ? 'white' : 'transparent', textTransform: 'capitalize', padding: '0.5rem 1rem' }}
+                className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
+                  activeTab === tab
+                    ? 'border-emerald-700 bg-emerald-700 text-white'
+                    : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
+                }`}
               >
-                {tab === 'social' ? 'SNS Tracker' : tab}
+                {tab}
               </button>
             ))}
           </nav>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto p-4">
-        {/* Dashboard */}
-        {activeTab === 'dashboard' && (
-          <div className="animate-fadeIn">
-            <h2 style={{ fontSize: '1.75rem', marginBottom: '1.5rem', color: '#2c3e50' }}>Dashboard</h2>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-              <div className="stat-card">
-                <div className="stat-value">{stats.total}</div>
-                <div className="stat-label">Total Tasks</div>
+      <main className="mx-auto max-w-6xl px-4 py-6">
+        {activeTab === 'Task Board' && (
+          <section className="space-y-6">
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                <h2 className="text-xl font-semibold text-slate-900">Task Board</h2>
+                <button
+                  type="button"
+                  onClick={openNewTaskForm}
+                  className="rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
+                >
+                  + Add Task
+                </button>
               </div>
-              <div className="stat-card">
-                <div className="stat-value" style={{ color: '#6c757d' }}>{stats.todo}</div>
-                <div className="stat-label">To Do</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-value" style={{ color: '#007bff' }}>{stats.inProgress}</div>
-                <div className="stat-label">In Progress</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-value" style={{ color: '#28a745' }}>{stats.done}</div>
-                <div className="stat-label">Done</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-value" style={{ color: '#dc3545' }}>{stats.urgent}</div>
-                <div className="stat-label">Urgent</div>
-              </div>
-            </div>
 
-            {/* Filters */}
-            <div className="card mb-6">
-              <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>Filters</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <select className="select" value={filterOwner} onChange={e => setFilterOwner(e.target.value)}>
-                  <option value="all">All Owners</option>
-                  {interns.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-                </select>
-                <select className="select" value={filterCategory} onChange={e => setFilterCategory(e.target.value)}>
-                  <option value="all">All Categories</option>
-                  {categories.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
-                </select>
-                <select className="select" value={filterPriority} onChange={e => setFilterPriority(e.target.value)}>
-                  <option value="all">All Priorities</option>
-                  {priorities.map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
-                </select>
-                <select className="select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-                  <option value="all">All Statuses</option>
-                  {statuses.map(s => <option key={s} value={s}>{s.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>)}
-                </select>
-              </div>
-            </div>
-
-            {/* Recent Tasks */}
-            <div className="card">
-              <div className="flex justify-between items-center mb-4">
-                <h3 style={{ margin: 0 }}>Recent Tasks</h3>
-                <button className="btn btn-primary" onClick={() => openTaskModal()}>+ Add Task</button>
-              </div>
-              <div className="overflow-x-auto">
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '2px solid #e9ecef' }}>
-                      <th style={{ textAlign: 'left', padding: '0.75rem' }}>Task</th>
-                      <th style={{ textAlign: 'left', padding: '0.75rem' }}>Owner</th>
-                      <th style={{ textAlign: 'left', padding: '0.75rem' }}>Category</th>
-                      <th style={{ textAlign: 'left', padding: '0.75rem' }}>Priority</th>
-                      <th style={{ textAlign: 'left', padding: '0.75rem' }}>Status</th>
-                      <th style={{ textAlign: 'left', padding: '0.75rem' }}>Due</th>
-                      <th style={{ textAlign: 'left', padding: '0.75rem' }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredTasks.slice(0, 10).map(task => (
-                      <tr key={task.id} style={{ borderBottom: '1px solid #e9ecef' }}>
-                        <td style={{ padding: '0.75rem' }}>
-                          <div style={{ fontWeight: 500 }}>{task.title}</div>
-                          <div style={{ fontSize: '0.75rem', color: '#6c757d' }}>{task.description?.slice(0, 50)}</div>
-                        </td>
-                        <td style={{ padding: '0.75rem' }}>
-                          <div className="intern-avatar" style={{ width: '2rem', height: '2rem', fontSize: '0.75rem' }}>
-                            {getInternAvatar(task.owner)}
-                          </div>
-                        </td>
-                        <td style={{ padding: '0.75rem' }}><span className="badge" style={{ backgroundColor: '#e9ecef', color: '#495057' }}>{task.category}</span></td>
-                        <td style={{ padding: '0.75rem' }}><span className={`badge badge-${task.priority}`}>{task.priority}</span></td>
-                        <td style={{ padding: '0.75rem' }}><span className={`badge status-${task.status}`}>{task.status.replace('-', ' ')}</span></td>
-                        <td style={{ padding: '0.75rem', fontSize: '0.875rem' }}>{task.dueDate || '-'}</td>
-                        <td style={{ padding: '0.75rem' }}>
-                          <button onClick={() => openTaskModal(task)} style={{ marginRight: '0.5rem', background: 'none', border: 'none', cursor: 'pointer', color: '#007bff' }}>Edit</button>
-                          <button onClick={() => handleDeleteTask(task.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc3545' }}>Delete</button>
-                        </td>
-                      </tr>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <label className="text-sm font-medium text-slate-700">
+                  Filter by owner
+                  <select
+                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+                    value={ownerFilter}
+                    onChange={(event) => setOwnerFilter(event.target.value)}
+                  >
+                    <option value="all">All owners</option>
+                    {interns.map((intern) => (
+                      <option key={intern.id} value={intern.name}>
+                        {intern.name}
+                      </option>
                     ))}
-                  </tbody>
-                </table>
+                  </select>
+                </label>
+
+                <label className="text-sm font-medium text-slate-700">
+                  Filter by status
+                  <select
+                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+                    value={statusFilter}
+                    onChange={(event) => setStatusFilter(event.target.value)}
+                  >
+                    <option value="all">All statuses</option>
+                    {statuses.map((status) => (
+                      <option key={status} value={status}>
+                        {status.replace('-', ' ')}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Kanban Board */}
-        {activeTab === 'kanban' && (
-          <div className="animate-fadeIn">
-            <div className="flex justify-between items-center mb-4">
-              <h2 style={{ fontSize: '1.75rem', margin: 0, color: '#2c3e50' }}>Kanban Board</h2>
-              <button className="btn btn-primary" onClick={() => openTaskModal()}>+ Add Task</button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {statuses.map(status => (
-                <div key={status} className="kanban-column">
-                  <h3 style={{ margin: '0 0 1rem 0', textTransform: 'capitalize', color: '#495057', fontSize: '1rem' }}>
-                    {status.replace('-', ' ')} ({tasks.filter(t => t.status === status).length})
-                  </h3>
-                  {filteredTasks.filter(t => t.status === status).map(task => (
-                    <div key={task.id} className="kanban-card">
-                      <div className="flex justify-between items-start mb-2">
-                        <span className={`badge badge-${task.priority}`} style={{ fontSize: '0.625rem' }}>{task.priority}</span>
-                        <div className="flex gap-1">
+            <form onSubmit={submitTask} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <h3 className="mb-4 text-lg font-semibold text-slate-900">{editingTaskId ? 'Edit Task' : 'Add Task'}</h3>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <label className="text-sm font-medium text-slate-700">
+                  Title
+                  <input
+                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+                    value={taskForm.title}
+                    onChange={(event) => setTaskForm({ ...taskForm, title: event.target.value })}
+                    placeholder="Task title"
+                    required
+                  />
+                </label>
+
+                <label className="text-sm font-medium text-slate-700">
+                  Owner
+                  <select
+                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+                    value={taskForm.owner}
+                    onChange={(event) => setTaskForm({ ...taskForm, owner: event.target.value })}
+                    required
+                  >
+                    <option value="">Select owner</option>
+                    {interns.map((intern) => (
+                      <option key={intern.id} value={intern.name}>
+                        {intern.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="text-sm font-medium text-slate-700">
+                  Due date
+                  <input
+                    type="date"
+                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+                    value={taskForm.dueDate}
+                    onChange={(event) => setTaskForm({ ...taskForm, dueDate: event.target.value })}
+                  />
+                </label>
+
+                <label className="text-sm font-medium text-slate-700">
+                  Priority
+                  <select
+                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+                    value={taskForm.priority}
+                    onChange={(event) => setTaskForm({ ...taskForm, priority: event.target.value })}
+                  >
+                    {priorities.map((priority) => (
+                      <option key={priority} value={priority}>
+                        {priority}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="text-sm font-medium text-slate-700 md:col-span-2">
+                  Notes
+                  <textarea
+                    rows={3}
+                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+                    value={taskForm.notes}
+                    onChange={(event) => setTaskForm({ ...taskForm, notes: event.target.value })}
+                    placeholder="Optional notes"
+                  />
+                </label>
+
+                <label className="text-sm font-medium text-slate-700">
+                  Status
+                  <select
+                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+                    value={taskForm.status}
+                    onChange={(event) => setTaskForm({ ...taskForm, status: event.target.value })}
+                  >
+                    {statuses.map((status) => (
+                      <option key={status} value={status}>
+                        {status.replace('-', ' ')}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button type="submit" className="rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800">
+                  {editingTaskId ? 'Update Task' : 'Create Task'}
+                </button>
+                <button
+                  type="button"
+                  onClick={openNewTaskForm}
+                  className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                >
+                  Clear
+                </button>
+              </div>
+            </form>
+
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
+              {statuses.map((status) => (
+                <div key={status} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">{status.replace('-', ' ')}</h3>
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{tasksByStatus[status]?.length ?? 0}</span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {(tasksByStatus[status] ?? []).map((task) => (
+                      <article key={task.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <p className="text-sm font-semibold text-slate-900">{task.title}</p>
+                        <p className="mt-1 text-xs text-slate-600">Owner: {task.owner}</p>
+                        <p className="text-xs text-slate-600">Due: {task.dueDate || 'Not set'}</p>
+                        <p className="text-xs text-slate-600">Priority: {task.priority}</p>
+                        {task.notes && <p className="mt-1 text-xs text-slate-600">Notes: {task.notes}</p>}
+
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
                           <select
+                            className="rounded border border-slate-300 bg-white px-2 py-1 text-xs"
                             value={task.status}
-                            onChange={e => handleMoveTask(task.id, e.target.value)}
-                            className="select"
-                            style={{ padding: '0.25rem', fontSize: '0.625rem', width: 'auto' }}
+                            onChange={(event) => changeTaskStatus(task.id, event.target.value)}
                           >
-                            {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+                            {statuses.map((value) => (
+                              <option key={value} value={value}>
+                                {value.replace('-', ' ')}
+                              </option>
+                            ))}
                           </select>
+
+                          <button
+                            type="button"
+                            onClick={() => openEditTaskForm(task)}
+                            className="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => deleteTask(task.id)}
+                            className="rounded border border-rose-300 bg-white px-2 py-1 text-xs text-rose-700 hover:bg-rose-50"
+                          >
+                            Delete
+                          </button>
                         </div>
-                      </div>
-                      <div style={{ fontWeight: 500, marginBottom: '0.5rem' }}>{task.title}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#6c757d', marginBottom: '0.5rem' }}>{task.description?.slice(0, 60)}</div>
-                      <div className="flex justify-between items-center">
-                        <div className="intern-avatar" style={{ width: '1.5rem', height: '1.5rem', fontSize: '0.5rem' }}>
-                          {getInternAvatar(task.owner)}
-                        </div>
-                        <div className="flex gap-1">
-                          <button onClick={() => openTaskModal(task)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#007bff', fontSize: '0.75rem' }}>Edit</button>
-                          <button onClick={() => handleDeleteTask(task.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc3545', fontSize: '0.75rem' }}>×</button>
-                        </div>
-                      </div>
-                    </div>
+                      </article>
+                    ))}
+                    {(tasksByStatus[status] ?? []).length === 0 && <p className="text-xs text-slate-500">No tasks.</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {activeTab === 'Interns List' && (
+          <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h2 className="mb-4 text-xl font-semibold text-slate-900">Interns List</h2>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {interns.map((intern) => (
+                <article key={intern.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-base font-semibold text-slate-900">{intern.name}</p>
+                  <p className="text-sm text-slate-600">{intern.period}</p>
+                  <p className="mt-2 text-sm text-slate-700">{intern.focus.join(', ')}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {activeTab === 'Handover Tracker' && (
+          <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h2 className="mb-4 text-xl font-semibold text-slate-900">Handover Tracker</h2>
+            <div className="space-y-3">
+              {handovers.map((handover) => (
+                <article key={handover.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-sm font-semibold text-slate-900">{handover.flow}</p>
+                  <p className="text-sm text-slate-700">{handover.topic}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {activeTab === 'LinkedIn / SNS Tracker' && (
+          <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h2 className="mb-4 text-xl font-semibold text-slate-900">LinkedIn / SNS Tracker</h2>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-700">
+                    <th className="px-2 py-2">Post Idea</th>
+                    <th className="px-2 py-2">Platform</th>
+                    <th className="px-2 py-2">Owner</th>
+                    <th className="px-2 py-2">Status</th>
+                    <th className="px-2 py-2">Notes</th>
+                    <th className="px-2 py-2">Link</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {socialItems.map((item) => (
+                    <tr key={item.id} className="border-b border-slate-100 align-top">
+                      <td className="px-2 py-2">{item.idea}</td>
+                      <td className="px-2 py-2">{item.platform}</td>
+                      <td className="px-2 py-2">{item.owner}</td>
+                      <td className="px-2 py-2">{item.status}</td>
+                      <td className="px-2 py-2">{item.notes}</td>
+                      <td className="px-2 py-2">
+                        {item.link ? (
+                          <a className="text-emerald-700 underline" href={item.link} target="_blank" rel="noreferrer">
+                            Open
+                          </a>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
+                    </tr>
                   ))}
-                </div>
-              ))}
+                </tbody>
+              </table>
             </div>
-          </div>
-        )}
-
-        {/* Intern List */}
-        {activeTab === 'interns' && (
-          <div className="animate-fadeIn">
-            <h2 style={{ fontSize: '1.75rem', marginBottom: '1.5rem', color: '#2c3e50' }}>Intern List</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {interns.map(intern => (
-                <div key={intern.id} className="card" style={{ textAlign: 'center' }}>
-                  <div className="intern-avatar" style={{ width: '4rem', height: '4rem', fontSize: '1.25rem', margin: '0 auto 1rem' }}>
-                    {intern.avatar}
-                  </div>
-                  <h3 style={{ margin: '0 0 0.5rem 0' }}>{intern.name}</h3>
-                  <p style={{ margin: 0, color: '#6c757d', fontSize: '0.875rem' }}>{intern.role}</p>
-                  <p style={{ margin: '0.5rem 0 0 0', color: '#6c757d', fontSize: '0.75rem' }}>{intern.email}</p>
-                  <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e9ecef' }}>
-                    <span style={{ fontSize: '0.875rem' }}>{tasks.filter(t => t.owner === intern.id).length} tasks assigned</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Handover Tracker */}
-        {activeTab === 'handoff' && (
-          <div className="animate-fadeIn">
-            <div className="flex justify-between items-center mb-4">
-              <h2 style={{ fontSize: '1.75rem', margin: 0, color: '#2c3e50' }}>Handover Tracker</h2>
-              <button className="btn btn-primary" onClick={() => setShowHandoffModal(true)}>+ Add Handover</button>
-            </div>
-            <div className="grid gap-4">
-              {handoffs.map(handoff => (
-                <div key={handoff.id} className="card">
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="intern-avatar" style={{ width: '2rem', height: '2rem', fontSize: '0.75rem' }}>
-                          {getInternAvatar(handoff.fromIntern)}
-                        </div>
-                        <span style={{ color: '#6c757d' }}>→</span>
-                        <div className="intern-avatar" style={{ width: '2rem', height: '2rem', fontSize: '0.75rem', backgroundColor: '#f4a261' }}>
-                          {getInternAvatar(handoff.toIntern)}
-                        </div>
-                        <span style={{ fontWeight: 500 }}>{handoff.task}</span>
-                      </div>
-                      <p style={{ margin: 0, color: '#6c757d', fontSize: '0.875rem' }}>{handoff.notes}</p>
-                      <p style={{ margin: '0.5rem 0 0 0', color: '#6c757d', fontSize: '0.75rem' }}>Created: {handoff.createdAt}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <select
-                        className="select"
-                        style={{ width: 'auto' }}
-                        value={handoff.status}
-                        onChange={e => handleUpdateHandoffStatus(handoff.id, e.target.value)}
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="in-progress">In Progress</option>
-                        <option value="completed">Completed</option>
-                      </select>
-                      <button onClick={() => handleDeleteHandoff(handoff.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc3545', fontSize: '1.25rem' }}>×</button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {handoffs.length === 0 && <p style={{ color: '#6c757d', textAlign: 'center' }}>No handoffs yet</p>}
-            </div>
-          </div>
-        )}
-
-        {/* Social Media Tracker */}
-        {activeTab === 'social' && (
-          <div className="animate-fadeIn">
-            <div className="flex justify-between items-center mb-4">
-              <h2 style={{ fontSize: '1.75rem', margin: 0, color: '#2c3e50' }}>LinkedIn/SNS Content Tracker</h2>
-              <button className="btn btn-primary" onClick={() => setShowSocialModal(true)}>+ Add Post</button>
-            </div>
-            <div className="grid gap-4">
-              {socialPosts.map(post => (
-                <div key={post.id} className="card">
-                  <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="badge" style={{ 
-                          backgroundColor: post.platform === 'linkedin' ? '#0077b5' : post.platform === 'instagram' ? '#e4405f' : '#1da1f2',
-                          color: 'white'
-                        }}>{post.platform}</span>
-                        <span className={`badge ${post.status === 'published' ? 'badge-low' : post.status === 'scheduled' ? 'badge-medium' : 'status-todo'}`}>
-                          {post.status}
-                        </span>
-                      </div>
-                      <p style={{ margin: '0 0 0.5rem 0' }}>{post.content}</p>
-                      <p style={{ margin: 0, color: '#6c757d', fontSize: '0.875rem' }}>
-                        Scheduled: {post.scheduledDate || 'Not set'} • Owner: {getInternName(post.owner)}
-                      </p>
-                    </div>
-                    <button onClick={() => handleDeleteSocialPost(post.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc3545', fontSize: '1.25rem' }}>×</button>
-                  </div>
-                </div>
-              ))}
-              {socialPosts.length === 0 && <p style={{ color: '#6c757d', textAlign: 'center' }}>No posts yet</p>}
-            </div>
-          </div>
+          </section>
         )}
       </main>
-
-      {/* Task Modal */}
-      {showTaskModal && (
-        <div className="modal-overlay" onClick={closeTaskModal}>
-          <div className="modal-content animate-fadeIn" onClick={e => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0 }}>{editingTask ? 'Edit Task' : 'Add New Task'}</h2>
-            <div className="grid gap-4">
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Title *</label>
-                <input className="input" type="text" value={taskForm.title} onChange={e => setTaskForm({ ...taskForm, title: e.target.value })} placeholder="Task title" />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Description</label>
-                <textarea className="input" rows={3} value={taskForm.description} onChange={e => setTaskForm({ ...taskForm, description: e.target.value })} placeholder="Task description" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Owner *</label>
-                  <select className="select" value={taskForm.owner} onChange={e => setTaskForm({ ...taskForm, owner: parseInt(e.target.value) })}>
-                    <option value="">Select owner</option>
-                    {interns.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Category</label>
-                  <select className="select" value={taskForm.category} onChange={e => setTaskForm({ ...taskForm, category: e.target.value })}>
-                    {categories.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Priority</label>
-                  <select className="select" value={taskForm.priority} onChange={e => setTaskForm({ ...taskForm, priority: e.target.value })}>
-                    {priorities.map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Status</label>
-                  <select className="select" value={taskForm.status} onChange={e => setTaskForm({ ...taskForm, status: e.target.value })}>
-                    {statuses.map(s => <option key={s} value={s}>{s.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Due Date</label>
-                <input className="input" type="date" value={taskForm.dueDate} onChange={e => setTaskForm({ ...taskForm, dueDate: e.target.value })} />
-              </div>
-              <div className="flex gap-2 justify-end">
-                <button className="btn btn-secondary" onClick={closeTaskModal}>Cancel</button>
-                <button className="btn btn-primary" onClick={handleSaveTask}>{editingTask ? 'Update' : 'Create'} Task</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Handoff Modal */}
-      {showHandoffModal && (
-        <div className="modal-overlay" onClick={() => setShowHandoffModal(false)}>
-          <div className="modal-content animate-fadeIn" onClick={e => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0 }}>Add New Handover</h2>
-            <div className="grid gap-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>From *</label>
-                  <select className="select" value={handoffForm.fromIntern} onChange={e => setHandoffForm({ ...handoffForm, fromIntern: parseInt(e.target.value) })}>
-                    <option value="">Select intern</option>
-                    {interns.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>To *</label>
-                  <select className="select" value={handoffForm.toIntern} onChange={e => setHandoffForm({ ...handoffForm, toIntern: parseInt(e.target.value) })}>
-                    <option value="">Select intern</option>
-                    {interns.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Task *</label>
-                <input className="input" type="text" value={handoffForm.task} onChange={e => setHandoffForm({ ...handoffForm, task: e.target.value })} placeholder="Task to be handed over" />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Notes</label>
-                <textarea className="input" rows={2} value={handoffForm.notes} onChange={e => setHandoffForm({ ...handoffForm, notes: e.target.value })} placeholder="Additional notes" />
-              </div>
-              <div className="flex gap-2 justify-end">
-                <button className="btn btn-secondary" onClick={() => setShowHandoffModal(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={handleSaveHandoff}>Create Handover</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Social Post Modal */}
-      {showSocialModal && (
-        <div className="modal-overlay" onClick={() => setShowSocialModal(false)}>
-          <div className="modal-content animate-fadeIn" onClick={e => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0 }}>Add New Post</h2>
-            <div className="grid gap-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Platform</label>
-                  <select className="select" value={socialForm.platform} onChange={e => setSocialForm({ ...socialForm, platform: e.target.value })}>
-                    <option value="linkedin">LinkedIn</option>
-                    <option value="instagram">Instagram</option>
-                    <option value="twitter">Twitter</option>
-                    <option value="facebook">Facebook</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Status</label>
-                  <select className="select" value={socialForm.status} onChange={e => setSocialForm({ ...socialForm, status: e.target.value })}>
-                    <option value="draft">Draft</option>
-                    <option value="scheduled">Scheduled</option>
-                    <option value="published">Published</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Content *</label>
-                <textarea className="input" rows={4} value={socialForm.content} onChange={e => setSocialForm({ ...socialForm, content: e.target.value })} placeholder="Post content..." />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Scheduled Date</label>
-                  <input className="input" type="date" value={socialForm.scheduledDate} onChange={e => setSocialForm({ ...socialForm, scheduledDate: e.target.value })} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Owner *</label>
-                  <select className="select" value={socialForm.owner} onChange={e => setSocialForm({ ...socialForm, owner: parseInt(e.target.value) })}>
-                    <option value="">Select owner</option>
-                    {interns.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div className="flex gap-2 justify-end">
-                <button className="btn btn-secondary" onClick={() => setShowSocialModal(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={handleSaveSocialPost}>Create Post</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
